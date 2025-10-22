@@ -3,19 +3,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		const togglePasswordButtons = document.querySelectorAll('.toggle-password')
 		togglePasswordButtons.forEach(button => {
 			button.addEventListener('click', function () {
-				const parent =
-					this.closest('.form-group') || this.closest('.password-wrapper')
+				const parent = this.parentElement
 				if (!parent) return
 
-				const passwordInput = parent.querySelector('input')
+				const passwordInput = parent.querySelector('input[type="password"], input[type="text"]')
 				if (!passwordInput) return
 
 				if (passwordInput.type === 'password') {
 					passwordInput.type = 'text'
-					this.textContent = '🙈'
 				} else {
 					passwordInput.type = 'password'
-					this.textContent = '👁️'
 				}
 			})
 		})
@@ -113,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const usersChartData = prepareChartData(
 			CHART_DATA.users,
 			'Новых пользователей в день',
-			'#007bff'
+			'rgb(250, 250, 250)'
 		)
 		const usersChart = new Chart(usersCtx, {
 			type: 'line',
@@ -127,7 +124,11 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 10 : 12,
 							},
+							color: 'rgb(163, 163, 163)',
 							display: window.innerWidth > 470,
+						},
+						grid: {
+							color: 'rgba(163, 163, 163, 0.1)',
 						},
 					},
 					x: {
@@ -135,10 +136,14 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 10 : 12,
 							},
+							color: 'rgb(163, 163, 163)',
 							maxTicksLimit: window.innerWidth <= 768 ? 8 : 15,
 							maxRotation: 45,
 							minRotation: 45,
 							display: window.innerWidth > 470,
+						},
+						grid: {
+							color: 'rgba(163, 163, 163, 0.1)',
 						},
 					},
 				},
@@ -154,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 12 : 14,
 							},
+							color: 'rgb(250, 250, 250)',
 							display: window.innerWidth > 470,
 						},
 					},
@@ -168,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const keysChartData = prepareChartData(
 			CHART_DATA.keys,
 			'Новых ключей в день',
-			'#28a745'
+			'rgb(163, 163, 163)'
 		)
 		const keysChart = new Chart(keysCtx, {
 			type: 'line',
@@ -182,7 +188,11 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 10 : 12,
 							},
+							color: 'rgb(163, 163, 163)',
 							display: window.innerWidth > 470,
+						},
+						grid: {
+							color: 'rgba(163, 163, 163, 0.1)',
 						},
 					},
 					x: {
@@ -190,10 +200,14 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 10 : 12,
 							},
+							color: 'rgb(163, 163, 163)',
 							maxTicksLimit: window.innerWidth <= 768 ? 8 : 15,
 							maxRotation: 45,
 							minRotation: 45,
 							display: window.innerWidth > 470,
+						},
+						grid: {
+							color: 'rgba(163, 163, 163, 0.1)',
 						},
 					},
 				},
@@ -209,6 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 							font: {
 								size: window.innerWidth <= 768 ? 12 : 14,
 							},
+							color: 'rgb(250, 250, 250)',
 							display: window.innerWidth > 470,
 						},
 					},

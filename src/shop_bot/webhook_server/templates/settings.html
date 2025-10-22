@@ -1,455 +1,626 @@
-{% extends "base.html" %} {% block title %}Настройки Бота и Хостов{% endblock %}
+{% extends "base.html" %}
+{% block title %}Настройки Бота и Хостов{% endblock %}
 {% block content %}
 
-<h1>Настройки</h1>
-
-<div class="settings-container">
-	<div class="settings-column-left">
-		<section class="settings-section">
-			<h2>Управление Хостами (Серверами)</h2>
-
-			<div class="host-card">
-				<h4>Добавить новый хост</h4>
-				<form action="{{ url_for('add_host_route') }}" method="post">
-					<div class="form-group">
-						<label for="host_name">Название хоста:</label>
-						<input
-							type="text"
-							id="host_name"
-							name="host_name"
-							required
-							maxlength="26"
-						/>
-					</div>
-					<div class="form-group">
-						<label for="host_url">URL панели XUI:</label>
-						<input
-							type="url"
-							id="host_url"
-							name="host_url"
-							placeholder="http://123.45.67.89:54321"
-							required
-						/>
-					</div>
-					<div class="form-group">
-						<label for="host_username">Логин XUI:</label>
-						<input
-							type="text"
-							id="host_username"
-							name="host_username"
-							required
-						/>
-					</div>
-					<div class="form-group password-wrapper">
-						<label for="host_pass">Пароль XUI:</label>
-						<input type="password" id="host_pass" name="host_pass" required />
-						<button type="button" class="toggle-password">👁️</button>
-					</div>
-					<div class="form-group">
-						<label for="host_inbound_id">ID входящего подключения:</label>
-						<input
-							type="number"
-							id="host_inbound_id"
-							name="host_inbound_id"
-							required
-						/>
-					</div>
-					<button type="submit" class="button button-primary">Добавить</button>
-				</form>
-			</div>
-
-			{% if hosts %} {% for host in hosts %}
-			<div class="host-card">
-				<div class="host-header">
-					<h3>{{ host.host_name }}</h3>
-					<form
-						action="{{ url_for('delete_host_route', host_name=host.host_name) }}"
-						method="post"
-						data-confirm="Вы уверены, что хотите удалить этот хост и все его тарифы?"
-					>
-						<button type="submit" class="button button-danger button-small">
-							Удалить
-						</button>
-					</form>
-				</div>
-				<p><strong>URL:</strong> {{ host.host_url }}</p>
-				<div class="plans-section">
-					<h4>Тарифы:</h4>
-					{% if host.plans %}
-					<ul class="plan-list">
-						{% for plan in host.plans %}
-						<li>
-							<span>
-								{{ plan.plan_name }} - {{ plan.price|round(0) }} RUB
-							</span>
-							<form
-								action="{{ url_for('delete_plan_route', plan_id=plan.plan_id) }}"
-								method="post"
-							>
-								<button type="submit" class="button button-danger button-tiny">
-									×
-								</button>
-							</form>
-						</li>
-						{% endfor %}
-					</ul>
-					{% else %}
-					<p>Тарифы не добавлены.</p>
-					{% endif %}
-					<h5>Добавить новый тариф:</h5>
-					<form
-						action="{{ url_for('add_plan_route') }}"
-						method="post"
-						class="form-inline"
-					>
-						<input
-							type="hidden"
-							name="host_name"
-							value="{{ host.host_name }}"
-						/>
-						<input
-							type="text"
-							name="plan_name"
-							placeholder="Название"
-							required
-						/>
-						<input type="number" name="months" placeholder="Мес." required />
-						<input
-							type="number"
-							step="0.01"
-							name="price"
-							placeholder="Цена"
-							required
-						/>
-						<button type="submit" class="button button-primary button-small">
-							+
-						</button>
-					</form>
-				</div>
-			</div>
-			{% endfor %} {% else %}
-			<p>Хосты еще не добавлены.</p>
-			{% endif %}
-		</section>
+<div class="space-y-6">
+	<div>
+		<h1 class="text-3xl font-bold tracking-tight">Настройки</h1>
+		<p class="text-muted-foreground mt-1">Управление хостами, ботами и системными настройками</p>
 	</div>
 
-	<div class="settings-column-right">
-		<form action="{{ url_for('settings_page') }}" method="post">
-			<section class="settings-section">
-				<h2>Настройки Панели</h2>
-				<div class="form-group">
-					<label for="panel_login">Логин для входа в панель:</label>
-					<input
-						type="text"
-						id="panel_login"
-						name="panel_login"
-						value="{{ settings.panel_login or '' }}"
-						required
-					/>
-				</div>
-				<div class="form-group password-wrapper">
-					<label for="panel_password"
-						>Новый пароль (оставьте пустым, чтобы не менять):</label
-					>
-					<input type="password" id="panel_password" name="panel_password" />
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-			</section>
+	<div class="grid gap-6 lg:grid-cols-3">
+		<div class="lg:col-span-1 space-y-6">
+			<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+				<h2 class="text-xl font-semibold mb-4">Управление Хостами</h2>
 
-			<section class="settings-section">
-				<h2>Настройка Бота</h2>
-				<div class="form-group password-wrapper">
-					<label for="telegram_bot_token">Токен бота:</label>
-					<input
-						type="password"
-						id="telegram_bot_token"
-						name="telegram_bot_token"
-						value="{{ settings.telegram_bot_token or '' }}"
-						required
-					/>
-					<button type="button" class="toggle-password">👁️</button>
+				<div class="space-y-4 mb-6">
+					<h3 class="text-sm font-medium text-muted-foreground">Добавить новый хост</h3>
+					<form action="{{ url_for('add_host_route') }}" method="post" class="space-y-4">
+						<div class="space-y-2">
+							<label for="host_name" class="text-sm font-medium">Название хоста:</label>
+							<input
+								type="text"
+								id="host_name"
+								name="host_name"
+								required
+								maxlength="26"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="host_url" class="text-sm font-medium">URL панели XUI:</label>
+							<input
+								type="url"
+								id="host_url"
+								name="host_url"
+								placeholder="http://123.45.67.89:54321"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="host_username" class="text-sm font-medium">Логин XUI:</label>
+							<input
+								type="text"
+								id="host_username"
+								name="host_username"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="host_pass" class="text-sm font-medium">Пароль XUI:</label>
+							<div class="relative">
+								<input
+									type="password"
+									id="host_pass"
+									name="host_pass"
+									required
+									class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+								/>
+								<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+									</svg>
+								</button>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<label for="host_inbound_id" class="text-sm font-medium">ID входящего подключения:</label>
+							<input
+								type="number"
+								id="host_inbound_id"
+								name="host_inbound_id"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<button
+							type="submit"
+							class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+						>
+							Добавить
+						</button>
+					</form>
 				</div>
-				<div class="form-group">
-					<label for="telegram_bot_username">Username бота (без @):</label>
-					<input
-						type="text"
-						id="telegram_bot_username"
-						name="telegram_bot_username"
-						value="{{ settings.telegram_bot_username or '' }}"
-						required
-					/>
-				</div>
-				<div class="form-group">
-					<label for="admin_telegram_id">Telegram ID Администратора:</label>
-					<input
-						type="text"
-						id="admin_telegram_id"
-						name="admin_telegram_id"
-						value="{{ settings.admin_telegram_id or '' }}"
-						required
-					/>
-				</div>
-			</section>
-			<section class="settings-section">
-				<h2>Настройки Поддержки и Бота-Саппорта</h2>
-				<div class="form-group">
-					<label for="support_user">URL поддержки или Бота-Саппорта:</label>
-					<input
-						type="text"
-						id="support_user"
-						name="support_user"
-						value="{{ settings.support_user or '' }}"
-					/>
-				</div>
-				<div class="form-group password-wrapper">
-					<label for="support_bot_token"
-						>Токен Support-бота (если используется):</label
-					>
-					<input
-						type="password"
-						id="support_bot_token"
-						name="support_bot_token"
-						value="{{ settings.support_bot_token or '' }}"
-					/>
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-				<div class="form-group">
-					<label for="support_group_id"
-						>ID Группы поддержки (должна быть включена функция форума
-						(Topics)):</label
-					>
-					<input
-						type="text"
-						id="support_group_id"
-						name="support_group_id"
-						value="{{ settings.support_group_id or '' }}"
-					/>
-				</div>
-			</section>
-			<section class="settings-section">
-				<h2>Настройки Реферальной программы</h2>
-				<div class="form-group form-group-checkbox">
-					<input type="hidden" name="enable_referrals" value="false" />
-					<input type="checkbox" id="enable_referrals" name="enable_referrals"
-					value="true" {% if settings.enable_referrals == 'true' %}checked{%
-					endif %}>
-					<label for="enable_referrals">Включить реферальную систему</label>
-				</div>
-				<div class="form-group">
-					<label for="minimum_withdrawal">Минимальная сумма для вывода:</label>
-					<input
-						type="number"
-						id="minimum_withdrawal"
-						name="minimum_withdrawal"
-						value="{{ settings.minimum_withdrawal or '10' }}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="referral_percentage"
-						>Процент вознаграждения пригласившему (%):</label
-					>
-					<input
-						type="number"
-						id="referral_percentage"
-						name="referral_percentage"
-						value="{{ settings.referral_percentage or '10' }}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="referral_discount"
-						>Скидка для нового пользователя на первую покупку (%):</label
-					>
-					<input
-						type="number"
-						id="referral_discount"
-						name="referral_discount"
-						value="{{ settings.referral_discount or '5' }}"
-					/>
-				</div>
-			</section>
-			<section class="settings-section">
-				<h2>Настройки Пробного периода</h2>
-				<div class="form-group form-group-checkbox">
-					<input type="hidden" name="trial_enabled" value="false" />
-					<input type="checkbox" id="trial_enabled" name="trial_enabled"
-					value="true" {% if settings.trial_enabled == 'true' %}checked{% endif
-					%}>
-					<label for="trial_enabled">Включить пробный период</label>
-				</div>
-				<div class="form-group">
-					<label for="trial_duration_days"
-						>Длительность пробного периода (в днях):</label
-					>
-					<input
-						type="number"
-						id="trial_duration_days"
-						name="trial_duration_days"
-						value="{{ settings.trial_duration_days or '3' }}"
-					/>
-				</div>
-			</section>
-			<section class="settings-section">
-				<h2>Настройки Платежных Систем</h2>
-				<h2>Настройка YooKassa</h2>
-				<div class="form-group">
-					<label for="receipt_email">Почта для чеков:</label>
-					<input
-						type="text"
-						id="receipt_email"
-						name="receipt_email"
-						value="{{ settings.receipt_email or '' }}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="yookassa_shop_id">YooKassa Shop ID:</label>
-					<input
-						type="text"
-						id="yookassa_shop_id"
-						name="yookassa_shop_id"
-						value="{{ settings.yookassa_shop_id or '' }}"
-					/>
-				</div>
-				<div class="form-group password-wrapper">
-					<label for="yookassa_secret_key">YooKassa Secret Key:</label>
-					<input
-						type="password"
-						id="yookassa_secret_key"
-						name="yookassa_secret_key"
-						value="{{ settings.yookassa_secret_key or '' }}"
-					/>
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-				<div class="form-group form-group-checkbox">
-					<input type="hidden" name="sbp_enabled" value="false" />
-					<input type="checkbox" id="sbp_enabled" name="sbp_enabled"
-					value="true" {% if settings.sbp_enabled == 'true' %}checked{% endif
-					%}>
-					<label for="sbp_enabled">Включить оплату через СБП</label>
-				</div>
-				<h2>Настройка CryptoBot</h2>
-				<div class="form-group password-wrapper">
-					<label for="cryptobot_token">CryptoBot Token:</label>
-					<input
-						type="password"
-						id="cryptobot_token"
-						name="cryptobot_token"
-						value="{{ settings.cryptobot_token or '' }}"
-					/>
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-				<h2>Настройка Heleket</h2>
-				<div class="form-group">
-					<label for="heleket_merchant_id">Heleket Merchant ID:</label>
-					<input
-						type="text"
-						id="heleket_merchant_id"
-						name="heleket_merchant_id"
-						value="{{ settings.heleket_merchant_id or '' }}"
-					/>
-				</div>
-				<div class="form-group password-wrapper">
-					<label for="heleket_api_key">Heleket API Key:</label>
-					<input
-						type="password"
-						id="heleket_api_key"
-						name="heleket_api_key"
-						value="{{ settings.heleket_api_key or '' }}"
-					/>
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-				<div class="form-group">
-					<label for="domain">Ваш домен (например, my-shop.com):</label>
-					<input
-						type="text"
-						id="domain"
-						name="domain"
-						value="{{ settings.domain or '' }}"
-					/>
-				</div>
-				<h2>Настройка TonConnect</h2>
-				<div class="form-group">
-					<label for="ton_wallet_address">Ton Wallet:</label>
-					<input
-						type="text"
-						id="ton_wallet_address"
-						name="ton_wallet_address"
-						value="{{ settings.ton_wallet_address or '' }}"
-					/>
-				</div>
-				<div class="form-group password-wrapper">
-					<label for="tonapi_key">TonAPI Key:</label>
-					<input
-						type="password"
-						id="tonapi_key"
-						name="tonapi_key"
-						value="{{ settings.tonapi_key or '' }}"
-					/>
-					<button type="button" class="toggle-password">👁️</button>
-				</div>
-			</section>
 
-			<section class="settings-section">
-				<h2>Настройки Контента</h2>
-				<div class="form-group">
-					<label for="about_text">Текст "О проекте":</label>
-					<textarea id="about_text" name="about_text" rows="3">
-{{
-							settings.about_text or ""
-						}}</textarea
-					>
-				</div>
-				<div class="form-group">
-					<label for="support_text">Текст в разделе "Поддержка":</label>
-					<textarea id="support_text" name="support_text" rows="3">
-{{
-							settings.support_text or ""
-						}}</textarea
-					>
-				</div>
-				<div class="form-group">
-					<label for="terms_url">URL "Условия использования":</label>
-					<input
-						type="url"
-						id="terms_url"
-						name="terms_url"
-						value="{{ settings.terms_url or '' }}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="privacy_url">URL "Политика конфиденциальности":</label>
-					<input
-						type="url"
-						id="privacy_url"
-						name="privacy_url"
-						value="{{ settings.privacy_url or '' }}"
-					/>
-				</div>
-				<div class="form-group">
-					<label for="channel_url"
-						>URL Telegram-канала (напр. https://t.me/nnstorenews):</label
-					>
-					<input
-						type="url"
-						id="channel_url"
-						name="channel_url"
-						value="{{ settings.channel_url or '' }}"
-					/>
-				</div>
-				<div class="form-group form-group-checkbox">
-					<input type="hidden" name="force_subscription" value="false" />
-					<input type="checkbox" id="force_subscription"
-					name="force_subscription" value="true" {% if
-					settings.force_subscription == 'true' %}checked{% endif %}>
-					<label for="force_subscription"
-						>Требовать обязательную подписку на канал</label
-					>
-				</div>
-			</section>
+				{% if hosts %}
+				<div class="space-y-4">
+					{% for host in hosts %}
+					<div class="rounded-md border border-border bg-secondary/30 p-4">
+						<div class="flex items-start justify-between mb-3">
+							<h3 class="font-semibold text-lg">{{ host.host_name }}</h3>
+							<form
+								action="{{ url_for('delete_host_route', host_name=host.host_name) }}"
+								method="post"
+								data-confirm="Вы уверены, что хотите удалить этот хост и все его тарифы?"
+								class="inline"
+							>
+								<button
+									type="submit"
+									class="inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+								>
+									Удалить
+								</button>
+							</form>
+						</div>
+						<p class="text-sm text-muted-foreground mb-4">{{ host.host_url }}</p>
 
-			<button type="submit" class="button button-primary">
-				Сохранить все настройки
-			</button>
-		</form>
+						<div class="space-y-3">
+							<div class="text-sm font-medium">Тарифы:</div>
+							{% if host.plans %}
+							<div class="space-y-2">
+								{% for plan in host.plans %}
+								<div class="flex items-center justify-between text-sm p-2 rounded bg-secondary/50">
+									<span>{{ plan.plan_name }} - {{ plan.price|round(0) }} RUB</span>
+									<form
+										action="{{ url_for('delete_plan_route', plan_id=plan.plan_id) }}"
+										method="post"
+										class="inline"
+									>
+										<button
+											type="submit"
+											class="inline-flex items-center justify-center rounded-md text-xs font-medium h-6 w-6 bg-destructive/80 text-destructive-foreground hover:bg-destructive transition-colors"
+										>
+											×
+										</button>
+									</form>
+								</div>
+								{% endfor %}
+							</div>
+							{% else %}
+							<p class="text-sm text-muted-foreground">Тарифы не добавлены</p>
+							{% endif %}
+
+							<div class="pt-2">
+								<div class="text-sm font-medium mb-2">Добавить тариф:</div>
+								<form
+									action="{{ url_for('add_plan_route') }}"
+									method="post"
+									class="space-y-2"
+								>
+									<input type="hidden" name="host_name" value="{{ host.host_name }}" />
+									<input
+										type="text"
+										name="plan_name"
+										placeholder="Название"
+										required
+										class="flex h-9 w-full rounded-md border border-input bg-secondary px-3 py-1 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+									/>
+									<div class="flex gap-2">
+										<input
+											type="number"
+											name="months"
+											placeholder="Мес."
+											required
+											class="flex h-9 w-full rounded-md border border-input bg-secondary px-3 py-1 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										/>
+										<input
+											type="number"
+											step="0.01"
+											name="price"
+											placeholder="Цена"
+											required
+											class="flex h-9 w-full rounded-md border border-input bg-secondary px-3 py-1 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										/>
+										<button
+											type="submit"
+											class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+										>
+											+
+										</button>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% else %}
+				<p class="text-sm text-muted-foreground text-center py-4">Хосты еще не добавлены</p>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="lg:col-span-2">
+			<form action="{{ url_for('settings_page') }}" method="post" class="space-y-6">
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Настройки Панели</h2>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<label for="panel_login" class="text-sm font-medium">Логин для входа в панель:</label>
+							<input
+								type="text"
+								id="panel_login"
+								name="panel_login"
+								value="{{ settings.panel_login or '' }}"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="panel_password" class="text-sm font-medium">Новый пароль (оставьте пустым, чтобы не менять):</label>
+							<div class="relative">
+								<input
+									type="password"
+									id="panel_password"
+									name="panel_password"
+									class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+								/>
+								<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+									</svg>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Настройка Бота</h2>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<label for="telegram_bot_token" class="text-sm font-medium">Токен бота:</label>
+							<div class="relative">
+								<input
+									type="password"
+									id="telegram_bot_token"
+									name="telegram_bot_token"
+									value="{{ settings.telegram_bot_token or '' }}"
+									required
+									class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+								/>
+								<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+									</svg>
+								</button>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<label for="telegram_bot_username" class="text-sm font-medium">Username бота (без @):</label>
+							<input
+								type="text"
+								id="telegram_bot_username"
+								name="telegram_bot_username"
+								value="{{ settings.telegram_bot_username or '' }}"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="admin_telegram_id" class="text-sm font-medium">Telegram ID Администратора:</label>
+							<input
+								type="text"
+								id="admin_telegram_id"
+								name="admin_telegram_id"
+								value="{{ settings.admin_telegram_id or '' }}"
+								required
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Настройки Поддержки</h2>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<label for="support_user" class="text-sm font-medium">URL поддержки или Бота-Саппорта:</label>
+							<input
+								type="text"
+								id="support_user"
+								name="support_user"
+								value="{{ settings.support_user or '' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="support_bot_token" class="text-sm font-medium">Токен Support-бота:</label>
+							<div class="relative">
+								<input
+									type="password"
+									id="support_bot_token"
+									name="support_bot_token"
+									value="{{ settings.support_bot_token or '' }}"
+									class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+								/>
+								<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+									</svg>
+								</button>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<label for="support_group_id" class="text-sm font-medium">ID Группы поддержки:</label>
+							<input
+								type="text"
+								id="support_group_id"
+								name="support_group_id"
+								value="{{ settings.support_group_id or '' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Реферальная программа</h2>
+					<div class="space-y-4">
+						<div class="flex items-center space-x-2">
+							<input type="hidden" name="enable_referrals" value="false" />
+							<input
+								type="checkbox"
+								id="enable_referrals"
+								name="enable_referrals"
+								value="true"
+								{% if settings.enable_referrals == 'true' %}checked{% endif %}
+								class="h-4 w-4 rounded border-input"
+							/>
+							<label for="enable_referrals" class="text-sm font-medium">Включить реферальную систему</label>
+						</div>
+						<div class="space-y-2">
+							<label for="minimum_withdrawal" class="text-sm font-medium">Минимальная сумма для вывода:</label>
+							<input
+								type="number"
+								id="minimum_withdrawal"
+								name="minimum_withdrawal"
+								value="{{ settings.minimum_withdrawal or '10' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="referral_percentage" class="text-sm font-medium">Процент вознаграждения (%):</label>
+							<input
+								type="number"
+								id="referral_percentage"
+								name="referral_percentage"
+								value="{{ settings.referral_percentage or '10' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="referral_discount" class="text-sm font-medium">Скидка для нового пользователя (%):</label>
+							<input
+								type="number"
+								id="referral_discount"
+								name="referral_discount"
+								value="{{ settings.referral_discount or '5' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Пробный период</h2>
+					<div class="space-y-4">
+						<div class="flex items-center space-x-2">
+							<input type="hidden" name="trial_enabled" value="false" />
+							<input
+								type="checkbox"
+								id="trial_enabled"
+								name="trial_enabled"
+								value="true"
+								{% if settings.trial_enabled == 'true' %}checked{% endif %}
+								class="h-4 w-4 rounded border-input"
+							/>
+							<label for="trial_enabled" class="text-sm font-medium">Включить пробный период</label>
+						</div>
+						<div class="space-y-2">
+							<label for="trial_duration_days" class="text-sm font-medium">Длительность (дни):</label>
+							<input
+								type="number"
+								id="trial_duration_days"
+								name="trial_duration_days"
+								value="{{ settings.trial_duration_days or '3' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Платежные Системы</h2>
+					<div class="space-y-6">
+						<div>
+							<h3 class="text-base font-semibold mb-3">YooKassa</h3>
+							<div class="space-y-4">
+								<div class="space-y-2">
+									<label for="receipt_email" class="text-sm font-medium">Почта для чеков:</label>
+									<input
+										type="text"
+										id="receipt_email"
+										name="receipt_email"
+										value="{{ settings.receipt_email or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+									/>
+								</div>
+								<div class="space-y-2">
+									<label for="yookassa_shop_id" class="text-sm font-medium">Shop ID:</label>
+									<input
+										type="text"
+										id="yookassa_shop_id"
+										name="yookassa_shop_id"
+										value="{{ settings.yookassa_shop_id or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+									/>
+								</div>
+								<div class="space-y-2">
+									<label for="yookassa_secret_key" class="text-sm font-medium">Secret Key:</label>
+									<div class="relative">
+										<input
+											type="password"
+											id="yookassa_secret_key"
+											name="yookassa_secret_key"
+											value="{{ settings.yookassa_secret_key or '' }}"
+											class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+										/>
+										<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+											<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="flex items-center space-x-2">
+									<input type="hidden" name="sbp_enabled" value="false" />
+									<input
+										type="checkbox"
+										id="sbp_enabled"
+										name="sbp_enabled"
+										value="true"
+										{% if settings.sbp_enabled == 'true' %}checked{% endif %}
+										class="h-4 w-4 rounded border-input"
+									/>
+									<label for="sbp_enabled" class="text-sm font-medium">Включить СБП</label>
+								</div>
+							</div>
+						</div>
+
+						<div>
+							<h3 class="text-base font-semibold mb-3">CryptoBot</h3>
+							<div class="space-y-2">
+								<label for="cryptobot_token" class="text-sm font-medium">Token:</label>
+								<div class="relative">
+									<input
+										type="password"
+										id="cryptobot_token"
+										name="cryptobot_token"
+										value="{{ settings.cryptobot_token or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+									/>
+									<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+										<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+										</svg>
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div>
+							<h3 class="text-base font-semibold mb-3">Heleket</h3>
+							<div class="space-y-4">
+								<div class="space-y-2">
+									<label for="heleket_merchant_id" class="text-sm font-medium">Merchant ID:</label>
+									<input
+										type="text"
+										id="heleket_merchant_id"
+										name="heleket_merchant_id"
+										value="{{ settings.heleket_merchant_id or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+									/>
+								</div>
+								<div class="space-y-2">
+									<label for="heleket_api_key" class="text-sm font-medium">API Key:</label>
+									<div class="relative">
+										<input
+											type="password"
+											id="heleket_api_key"
+											name="heleket_api_key"
+											value="{{ settings.heleket_api_key or '' }}"
+											class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+										/>
+										<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+											<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="space-y-2">
+									<label for="domain" class="text-sm font-medium">Домен:</label>
+									<input
+										type="text"
+										id="domain"
+										name="domain"
+										value="{{ settings.domain or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div>
+							<h3 class="text-base font-semibold mb-3">TonConnect</h3>
+							<div class="space-y-4">
+								<div class="space-y-2">
+									<label for="ton_wallet_address" class="text-sm font-medium">Ton Wallet:</label>
+									<input
+										type="text"
+										id="ton_wallet_address"
+										name="ton_wallet_address"
+										value="{{ settings.ton_wallet_address or '' }}"
+										class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+									/>
+								</div>
+								<div class="space-y-2">
+									<label for="tonapi_key" class="text-sm font-medium">TonAPI Key:</label>
+									<div class="relative">
+										<input
+											type="password"
+											id="tonapi_key"
+											name="tonapi_key"
+											value="{{ settings.tonapi_key or '' }}"
+											class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 pr-10"
+										/>
+										<button type="button" class="toggle-password absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground">
+											<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="rounded-lg border border-border bg-card p-6 shadow-sm">
+					<h2 class="text-xl font-semibold mb-4">Настройки Контента</h2>
+					<div class="space-y-4">
+						<div class="space-y-2">
+							<label for="about_text" class="text-sm font-medium">Текст "О проекте":</label>
+							<textarea
+								id="about_text"
+								name="about_text"
+								rows="3"
+								class="flex w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							>{{ settings.about_text or "" }}</textarea>
+						</div>
+						<div class="space-y-2">
+							<label for="support_text" class="text-sm font-medium">Текст "Поддержка":</label>
+							<textarea
+								id="support_text"
+								name="support_text"
+								rows="3"
+								class="flex w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							>{{ settings.support_text or "" }}</textarea>
+						</div>
+						<div class="space-y-2">
+							<label for="terms_url" class="text-sm font-medium">URL "Условия использования":</label>
+							<input
+								type="url"
+								id="terms_url"
+								name="terms_url"
+								value="{{ settings.terms_url or '' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="privacy_url" class="text-sm font-medium">URL "Политика конфиденциальности":</label>
+							<input
+								type="url"
+								id="privacy_url"
+								name="privacy_url"
+								value="{{ settings.privacy_url or '' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="space-y-2">
+							<label for="channel_url" class="text-sm font-medium">URL Telegram-канала:</label>
+							<input
+								type="url"
+								id="channel_url"
+								name="channel_url"
+								value="{{ settings.channel_url or '' }}"
+								class="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+							/>
+						</div>
+						<div class="flex items-center space-x-2">
+							<input type="hidden" name="force_subscription" value="false" />
+							<input
+								type="checkbox"
+								id="force_subscription"
+								name="force_subscription"
+								value="true"
+								{% if settings.force_subscription == 'true' %}checked{% endif %}
+								class="h-4 w-4 rounded border-input"
+							/>
+							<label for="force_subscription" class="text-sm font-medium">Требовать подписку на канал</label>
+						</div>
+					</div>
+				</div>
+
+				<button
+					type="submit"
+					class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-6 py-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors w-full lg:w-auto"
+				>
+					Сохранить все настройки
+				</button>
+			</form>
+		</div>
 	</div>
 </div>
 

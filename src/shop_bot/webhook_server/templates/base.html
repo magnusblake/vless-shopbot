@@ -4,105 +4,212 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>{% block title %}Панель управления Ботом{% endblock %}</title>
-		<link
-			rel="stylesheet"
-			href="{{ url_for('static', filename='css/style.css') }}"
-		/>
+		<script src="https://cdn.tailwindcss.com"></script>
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						colors: {
+							border: 'hsl(0 0% 14.9%)',
+							input: 'hsl(0 0% 14.9%)',
+							ring: 'hsl(0 0% 83.1%)',
+							background: 'hsl(0 0% 3.9%)',
+							foreground: 'hsl(0 0% 98%)',
+							primary: {
+								DEFAULT: 'hsl(0 0% 98%)',
+								foreground: 'hsl(0 0% 9%)',
+							},
+							secondary: {
+								DEFAULT: 'hsl(0 0% 14.9%)',
+								foreground: 'hsl(0 0% 98%)',
+							},
+							destructive: {
+								DEFAULT: 'hsl(0 84.2% 60.2%)',
+								foreground: 'hsl(0 0% 98%)',
+							},
+							muted: {
+								DEFAULT: 'hsl(0 0% 14.9%)',
+								foreground: 'hsl(0 0% 63.9%)',
+							},
+							accent: {
+								DEFAULT: 'hsl(0 0% 14.9%)',
+								foreground: 'hsl(0 0% 98%)',
+							},
+							card: {
+								DEFAULT: 'hsl(0 0% 3.9%)',
+								foreground: 'hsl(0 0% 98%)',
+							},
+						},
+						borderRadius: {
+							lg: '0.5rem',
+							md: '0.375rem',
+							sm: '0.25rem',
+						},
+					},
+				},
+			};
+		</script>
+		<style>
+			* {
+				border-color: hsl(0 0% 14.9%);
+			}
+		</style>
 	</head>
-	<body>
-		<div class="container">
-			<header class="main-header">
-				<nav class="navigation">
-					<a
-						href="{{ url_for('dashboard_page') }}"
-						class="nav-link {% if request.endpoint == 'dashboard_page' %}active{% endif %}"
-						>Dashboard</a
-					>
-					<a
-						href="{{ url_for('users_page') }}"
-						class="nav-link {% if request.endpoint == 'users_page' %}active{% endif %}"
-						>Пользователи</a
-					>
-					<a
-						href="{{ url_for('settings_page') }}"
-						class="nav-link {% if request.endpoint == 'settings_page' %}active{% endif %}"
-						>Настройки</a
-					>
-				</nav>
+	<body class="bg-background text-foreground antialiased">
+		<div class="min-h-screen">
+			<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				<div class="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
+					<nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+						<a
+							href="{{ url_for('dashboard_page') }}"
+							class="transition-colors hover:text-foreground/80 {% if request.endpoint == 'dashboard_page' %}text-foreground border-b-2 border-primary pb-1{% else %}text-foreground/60{% endif %}"
+						>
+							Dashboard
+						</a>
+						<a
+							href="{{ url_for('users_page') }}"
+							class="transition-colors hover:text-foreground/80 {% if request.endpoint == 'users_page' %}text-foreground border-b-2 border-primary pb-1{% else %}text-foreground/60{% endif %}"
+						>
+							Пользователи
+						</a>
+						<a
+							href="{{ url_for('settings_page') }}"
+							class="transition-colors hover:text-foreground/80 {% if request.endpoint == 'settings_page' %}text-foreground border-b-2 border-primary pb-1{% else %}text-foreground/60{% endif %}"
+						>
+							Настройки
+						</a>
+					</nav>
 
-				<div class="header-controls">
-					<div class="bot-control">
-						{% if bot_status.shop_bot_running %}
-						<p class="status-running">Shop: <strong>Запущен</strong></p>
-						<form action="{{ url_for('stop_shop_bot_route') }}" method="post">
-							<button type="submit" class="button button-stop button-small">
-								Остановить
+					<div class="flex items-center space-x-4">
+						<div class="hidden lg:flex items-center space-x-4">
+							<div class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-border bg-secondary/50">
+								<div class="h-2 w-2 rounded-full {% if bot_status.shop_bot_running %}bg-green-500{% else %}bg-gray-500{% endif %}"></div>
+								<span class="text-xs font-medium">Shop</span>
+								<form action="{% if bot_status.shop_bot_running %}{{ url_for('stop_shop_bot_route') }}{% else %}{{ url_for('start_shop_bot_route') }}{% endif %}" method="post" class="inline">
+									<button
+										type="submit"
+										class="ml-2 inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 {% if bot_status.shop_bot_running %}bg-destructive hover:bg-destructive/90{% elif all_settings_ok %}bg-primary text-primary-foreground hover:bg-primary/90{% else %}bg-muted text-muted-foreground cursor-not-allowed{% endif %} transition-colors"
+										{% if not bot_status.shop_bot_running and not all_settings_ok %}disabled{% endif %}
+									>
+										{% if bot_status.shop_bot_running %}Остановить{% else %}Запустить{% endif %}
+									</button>
+								</form>
+							</div>
+
+							<div class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-border bg-secondary/50">
+								<div class="h-2 w-2 rounded-full {% if bot_status.support_bot_running %}bg-green-500{% else %}bg-gray-500{% endif %}"></div>
+								<span class="text-xs font-medium">Support</span>
+								<form action="{% if bot_status.support_bot_running %}{{ url_for('stop_support_bot_route') }}{% else %}{{ url_for('start_support_bot_route') }}{% endif %}" method="post" class="inline">
+									<button
+										type="submit"
+										class="ml-2 inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 {% if bot_status.support_bot_running %}bg-destructive hover:bg-destructive/90{% else %}bg-primary text-primary-foreground hover:bg-primary/90{% endif %} transition-colors"
+									>
+										{% if bot_status.support_bot_running %}Остановить{% else %}Запустить{% endif %}
+									</button>
+								</form>
+							</div>
+						</div>
+
+						<form action="{{ url_for('logout_page') }}" method="post" class="inline">
+							<button
+								type="submit"
+								class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+							>
+								Выйти
 							</button>
 						</form>
-						{% else %}
-						<p class="status-stopped">Shop: <strong>Остановлен</strong></p>
-						{% if all_settings_ok %}
-						<form action="{{ url_for('start_shop_bot_route') }}" method="post">
-							<button type="submit" class="button button-start button-small">
-								Запустить
-							</button>
-						</form>
-						{% else %}
+
 						<button
-							class="button button-disabled button-small"
-							disabled
-							title="Заполните обязательные настройки Telegram"
+							id="mobile-menu-button"
+							class="md:hidden inline-flex items-center justify-center rounded-md p-2 hover:bg-accent hover:text-accent-foreground"
 						>
-							Запустить
+							<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+							</svg>
 						</button>
-						{% endif %} {% endif %}
 					</div>
+				</div>
 
-					<div class="bot-control">
-						{% if bot_status.support_bot_running %}
-						<p class="status-running">Support: <strong>Запущен</strong></p>
-						<form
-							action="{{ url_for('stop_support_bot_route') }}"
-							method="post"
+				<div id="mobile-menu" class="hidden md:hidden border-t border-border">
+					<div class="container mx-auto px-4 py-4 space-y-3">
+						<a
+							href="{{ url_for('dashboard_page') }}"
+							class="block px-3 py-2 rounded-md text-base font-medium transition-colors {% if request.endpoint == 'dashboard_page' %}bg-secondary text-foreground{% else %}text-foreground/60 hover:bg-secondary/50{% endif %}"
 						>
-							<button type="submit" class="button button-stop button-small">
-								Остановить
-							</button>
-						</form>
-						{% else %}
-						<p class="status-stopped">Support: <strong>Остановлен</strong></p>
-						<form
-							action="{{ url_for('start_support_bot_route') }}"
-							method="post"
+							Dashboard
+						</a>
+						<a
+							href="{{ url_for('users_page') }}"
+							class="block px-3 py-2 rounded-md text-base font-medium transition-colors {% if request.endpoint == 'users_page' %}bg-secondary text-foreground{% else %}text-foreground/60 hover:bg-secondary/50{% endif %}"
 						>
-							<button type="submit" class="button button-start button-small">
-								Запустить
-							</button>
-						</form>
-						{% endif %}
-					</div>
+							Пользователи
+						</a>
+						<a
+							href="{{ url_for('settings_page') }}"
+							class="block px-3 py-2 rounded-md text-base font-medium transition-colors {% if request.endpoint == 'settings_page' %}bg-secondary text-foreground{% else %}text-foreground/60 hover:bg-secondary/50{% endif %}"
+						>
+							Настройки
+						</a>
 
-					<div class="user-session-controls">
-						<span>Вы вошли в систему.</span>
-						<form
-							action="{{ url_for('logout_page') }}"
-							method="post"
-							style="display: inline"
-						>
-							<button type="submit" class="button button-logout">Выйти</button>
-						</form>
+						<div class="pt-3 border-t border-border space-y-2">
+							<div class="flex items-center justify-between px-3 py-2 rounded-md border border-border bg-secondary/50">
+								<div class="flex items-center space-x-2">
+									<div class="h-2 w-2 rounded-full {% if bot_status.shop_bot_running %}bg-green-500{% else %}bg-gray-500{% endif %}"></div>
+									<span class="text-sm font-medium">Shop Bot</span>
+								</div>
+								<form action="{% if bot_status.shop_bot_running %}{{ url_for('stop_shop_bot_route') }}{% else %}{{ url_for('start_shop_bot_route') }}{% endif %}" method="post" class="inline">
+									<button
+										type="submit"
+										class="inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 {% if bot_status.shop_bot_running %}bg-destructive hover:bg-destructive/90{% elif all_settings_ok %}bg-primary text-primary-foreground hover:bg-primary/90{% else %}bg-muted text-muted-foreground cursor-not-allowed{% endif %} transition-colors"
+										{% if not bot_status.shop_bot_running and not all_settings_ok %}disabled{% endif %}
+									>
+										{% if bot_status.shop_bot_running %}Стоп{% else %}Старт{% endif %}
+									</button>
+								</form>
+							</div>
+
+							<div class="flex items-center justify-between px-3 py-2 rounded-md border border-border bg-secondary/50">
+								<div class="flex items-center space-x-2">
+									<div class="h-2 w-2 rounded-full {% if bot_status.support_bot_running %}bg-green-500{% else %}bg-gray-500{% endif %}"></div>
+									<span class="text-sm font-medium">Support Bot</span>
+								</div>
+								<form action="{% if bot_status.support_bot_running %}{{ url_for('stop_support_bot_route') }}{% else %}{{ url_for('start_support_bot_route') }}{% endif %}" method="post" class="inline">
+									<button
+										type="submit"
+										class="inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 {% if bot_status.support_bot_running %}bg-destructive hover:bg-destructive/90{% else %}bg-primary text-primary-foreground hover:bg-primary/90{% endif %} transition-colors"
+									>
+										{% if bot_status.support_bot_running %}Стоп{% else %}Старт{% endif %}
+									</button>
+								</form>
+							</div>
+						</div>
 					</div>
 				</div>
 			</header>
 
-			{% with messages = get_flashed_messages(with_categories=true) %} {% if
-			messages %} {% for category, message in messages %}
-			<div class="flash flash-{{ category }}">{{ message }}</div>
-			{% endfor %} {% endif %} {% endwith %}
+			<main class="container mx-auto px-4 py-6 lg:px-8 lg:py-8">
+				{% with messages = get_flashed_messages(with_categories=true) %}
+				{% if messages %}
+				<div class="mb-6 space-y-2">
+					{% for category, message in messages %}
+					<div class="rounded-lg border px-4 py-3 text-sm {% if category == 'success' %}bg-green-500/10 border-green-500/50 text-green-500{% else %}bg-destructive/10 border-destructive/50 text-destructive{% endif %}">
+						{{ message }}
+					</div>
+					{% endfor %}
+				</div>
+				{% endif %}
+				{% endwith %}
 
-			<main>{% block content %}{% endblock %}</main>
+				{% block content %}{% endblock %}
+			</main>
 		</div>
+
+		<script>
+			document.getElementById('mobile-menu-button').addEventListener('click', function() {
+				document.getElementById('mobile-menu').classList.toggle('hidden');
+			});
+		</script>
 		<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 	</body>
 </html>
